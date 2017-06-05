@@ -7,9 +7,13 @@
 
 //Bunch of imports
 #include <iostream>
+#include <fstream>
 #include <string.h>
 #include <cstdlib>
 #include <iomanip>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 /* HashTable by Kevin Jin. A storage system for a list of students.
  * Takes in the inputs "ADD", "DELETE", "PRINT", "RANDOM", or "QUIT".
@@ -19,6 +23,8 @@
  * "RANDOM" allows one to add a specified number of randomly-generated students to the hash table.
  * "QUIT" works as generally advertised.
  * Please enter valid inputs or the code may crash unexpectedly!
+ * The hash function: Add the ASCII values of the first name, add double the ASCII vlaues of the second name,
+ * add the ID, and divide by size.
  */
 
 using namespace std;
@@ -34,18 +40,20 @@ struct Student {
 };
 
 //Declare functions
-void addStudent(Student** hashTable);
-void printOut(Student** hashTable);
-void deleteStudent(Student** hashTable);
-void randomStudents(Student** hashTable);
+void addStudent(Student** hashTable, int size);
+void printOut(Student** hashTable, int size);
+void deleteStudent(Student** hashTable, int size);
+void randomStudents(Student** hashTable, int size);
 
 //Main class. Takes in inputs and does stuff with it.
 int main() {
+	srand(time(NULL));
 	char input;
 	Student** hashTable = new Student*[100];
 	for (int i = 0; i < 100; i++) {
 		hashTable[i] = NULL;
 	}
+	int size = 100;
 	bool running = true;
 
 	//While quit has not been called:
@@ -56,16 +64,16 @@ int main() {
 		cin >> input;
 		cin.ignore(256, '\n');
 		if (input == 'a' || input == 'A') {
-			addStudent(hashTable);
+			addStudent(hashTable, size);
 		}
 		else if (input == 'p' || input == 'P') {
-			printOut(hashTable);
+			printOut(hashTable, size);
 		}
 		else if (input == 'd' || input == 'D') {
-			deleteStudent(hashTable);
+			deleteStudent(hashTable, size);
 		}
 		else if (input == 'r' || input == 'R') {
-			randomStudents(hashTable);
+			randomStudents(hashTable, size);
 		}
 		else if (input == 'q' || input == 'Q') {
 			cout << "Quitting..." << endl << "Program terminated. Thank you for your time.";
@@ -78,7 +86,7 @@ int main() {
 	}
 }
 
-void addStudent(Student** hashTable) {
+void addStudent(Student** hashTable, int size) {
 	Student* newStudent = new Student;
 	cout << "Please enter the first name of the student." << endl << "First name: ";
 	cin >> newStudent->firstName;
@@ -103,7 +111,7 @@ void addStudent(Student** hashTable) {
 	//TODO Temp stuff ends here
 }
 
-void printOut(Student** hashTable) {
+void printOut(Student** hashTable, int size) {
 	if (hashTable[0] == NULL) {
 		cout << "There are no students registered. You can add some with the \"ADD\" command." << endl << endl;
 		return;
@@ -116,9 +124,48 @@ void printOut(Student** hashTable) {
 		cout << i + 1 << ".\tName: " << temp->lastName << ", " << temp->firstName << "\t\tID: " << temp->id << "\t\tGPA: " << temp->gpa << endl;
 	}
 }
-void deleteStudent(Student** hashTable) {
+void deleteStudent(Student** hashTable, int size) {
 
 }
-void randomStudents(Student** hashTable) {
-
+void randomStudents(Student** hashTable, int size) {
+	cout << "How many random students would you like to generate?" << endl << "Num: ";
+	int num;
+	cin >> num;
+	int largestId = -1;
+	for (int i = 0; i < size; i++) {
+		if (hashTable[i]->id > largestId) largestId = hashTable[i]->id;
+	}
+	ifstream firstNames ("firstNames.txt");
+	ifstream lastNames ("lastNames.txt");
+	for (int i = 0; i < num; i++) {
+		Student* newStudent = new Student;
+		int randFirst = rand() % 100;
+		int randLast = rand() % 100;
+		float gpa = rand() % 10;
+		int id = ++largestId;
+		char newfirstName[80];
+		char newlastName[80];
+		for (int i = 0; i < 100; i++) {
+			if (i <= randFirst) {
+				firstNames.getline(newfirstName, 80);
+			}
+			if (i <= randLast) {
+				lastNames.getline(newlastName, 80);
+			}
+		}
+		//TODO Oops, use strcpy here!!!
+		newStudent->firstName = newfirstName;
+		newStudent->lastName = newlastName;
+		newStudent->gpa = gpa;
+		newStudent->id = id;
+		//TODO Placeholder insert
+		for (int i = 0; i < 100; i++) {
+				if (hashTable[i] == NULL) {
+					hashTable[i] = newStudent;
+					cout << "The student " << newStudent->firstName << " " << newStudent->lastName << " was successfully added." << endl;
+					return;
+				}
+			}
+		//TODO End of placeholder
+	}
 }
