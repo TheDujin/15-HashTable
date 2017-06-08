@@ -37,7 +37,6 @@ struct Student {
 	int id;
 	float gpa;
 	Student* next;
-	//TODO Maybe try adding <Student* next;> and initialize it as NULL in like main or something, this might make it chainable.
 };
 
 //Declare functions
@@ -49,8 +48,10 @@ void reHash(Student** & hashTable, int* & size);
 
 //Main class. Takes in inputs and does stuff with it.
 int main() {
+	//Initialize random number generator; it will be used for the RANDOM function
 	srand(time(NULL));
 	char input;
+	//Initialize stuff
 	Student** hashTable = new Student*[100];
 	for (int i = 0; i < 100; i++) {
 		hashTable[i] = NULL;
@@ -89,6 +90,7 @@ int main() {
 	}
 }
 
+//Adds a student to the hash table using the hash function.
 void addStudent(Student** & hashTable, int* & size) {
 	Student* newStudent = new Student;
 	newStudent->next = NULL;
@@ -103,6 +105,7 @@ void addStudent(Student** & hashTable, int* & size) {
 	cin.ignore();
 	cout << setprecision(2) << fixed << endl;
 	int hashIndex = 0;
+	//Determine the ASCII values of the first and last names at the same time by adding ASCII values of characters to the sum until a null character is reached.
 	bool firstEnd = false;
 	bool lastEnd = false;
 	for (int i = 0; i < 80; i++) {
@@ -115,10 +118,13 @@ void addStudent(Student** & hashTable, int* & size) {
 		}
 		else lastEnd = true;
 	}
+	//Modulo by size cause we don't want array index out of bounds error
 	hashIndex %= *size;
+	//If the spot in the hashtable is empty, add it.
 	if (hashTable[hashIndex] == NULL) {
 		hashTable[hashIndex] = newStudent;
 	}
+	//Otherwise, chain the student, and if the length of the chain exceeds 3 then we must resize the table.
 	else {
 		Student* current = hashTable[hashIndex];
 		int counts = 2;
@@ -132,19 +138,24 @@ void addStudent(Student** & hashTable, int* & size) {
 	cout << "The student " << newStudent->firstName << " " << newStudent->lastName << " was successfully added." << endl;
 }
 
+//Prints out students by printing out the locations in the hash table where it isn't NULL.
 void printOut(Student** hashTable, int* size) {
-	if (hashTable[0] == NULL) {
-		cout << "There are no students registered. You can add some with the \"ADD\" command." << endl << endl;
-		return;
-	}
-	for (int i = 0; i < 100; i++) {
+	bool printed = false;
+	for (int i = 0; i < *size; i++) {
 		if (hashTable[i] == NULL) {
 			continue;
 		}
 		Student* temp = hashTable[i];
-		cout << i + 1 << ".\tName: " << temp->lastName << ", " << temp->firstName << "\t\tID: " << temp->id << "\t\tGPA: " << temp->gpa << endl;
+		while (temp != NULL) {
+			cout << i << ".\tName: " << temp->firstName << " " << temp->lastName << "\t\tID: " << temp->id << "\t\tGPA: " << temp->gpa << endl;
+			temp = temp->next;
+		}
+		printed = true;
 	}
+	if (!printed) cout << cout << "There are no students registered. You can add some with the \"ADD\" or \"RANDOM\" commands." << endl << endl;
+	else cout << "Note: The numbers at the beginning are the slots of the hash table." << endl << endl;
 }
+//Deletes a student using their full name to find them.
 void deleteStudent(Student** hashTable, int* size) {
 	char* firstName = new char[80];
 	char* lastName = new char[80];
@@ -152,6 +163,7 @@ void deleteStudent(Student** hashTable, int* size) {
 	cin >> firstName;
 	cout << "Please enter the last name of the target student." << endl << "Last: ";
 	cin >> lastName;
+	//Call the hash function to figure out the position the student is at.
 	int hashIndex = 0;
 	bool firstEnd = false;
 	bool lastEnd = false;
@@ -168,6 +180,7 @@ void deleteStudent(Student** hashTable, int* size) {
 	hashIndex %= *size;
 	Student* current = hashTable[hashIndex];
 	Student* previous = NULL;
+	//If a student with that name can be found at that location, delete it and repair links as needed.
 	while (current != NULL) {
 		if (strcasecmp(current->firstName, firstName) == 0 && strcasecmp(current->lastName, lastName) == 0) {
 			if (previous == NULL) hashTable[hashIndex] = current->next;
@@ -182,6 +195,8 @@ void deleteStudent(Student** hashTable, int* size) {
 	}
 	cout << "Student not found!" << endl;
 }
+
+//Generates random students from 100 first names and 100 last names located in conveniently named files.
 void randomStudents(Student** & hashTable, int* & size) {
 	cout << "How many random students would you like to generate?" << endl << "Num: ";
 	int num;
@@ -190,17 +205,20 @@ void randomStudents(Student** & hashTable, int* & size) {
 	for (int i = 0; i < *size; i++) {
 		if (hashTable[i] != NULL && hashTable[i]->id > largestId) largestId = hashTable[i]->id;
 	}
+	//Initialize the file inputs
 	ifstream firstNames ("firstNames.txt");
 	ifstream lastNames ("lastNames.txt");
 	for (int i = 0; i < num; i++) {
 		Student* newStudent = new Student;
 		newStudent->next = NULL;
+		//Determine random values
 		int randFirst = rand() % 100;
 		int randLast = rand() % 100;
 		float gpa = (rand() % 1000) / 100.0;
 		int id = ++largestId;
 		char newfirstName[80];
 		char newlastName[80];
+		//Keep getting line until the randFirst and randLast values are reached (that will become the random name that we are selecting)
 		for (int j = 0; j < 100; j++) {
 			if (j <= randFirst) {
 				firstNames.getline(newfirstName, 80);
@@ -209,17 +227,19 @@ void randomStudents(Student** & hashTable, int* & size) {
 				lastNames.getline(newlastName, 80);
 			}
 		}
+		//Copy the values into the student name values.
 		strcpy(newStudent->firstName, newfirstName);
 		strcpy(newStudent->lastName, newlastName);
 		for (int j = 0; j < 80; j++) {
-			if (newStudent->firstName[j] == '\r') newStudent->firstName[j] = '\0';
-			if (newStudent->lastName[j] == '\r') newStudent->lastName[j] = '\0';
+			if (newStudent->firstName[j] == '\r' || newStudent->lastName[j] == '\n') newStudent->firstName[j] = '\0';
+			if (newStudent->firstName[j] == '\r' || newStudent->lastName[j] == '\n') newStudent->lastName[j] = '\0';
 		}
 		newStudent->gpa = gpa;
 		newStudent->id = id;
 		int hashIndex = 0;
 		bool firstEnd = false;
 		bool lastEnd = false;
+		//Determine where to put the student and hash it in.
 		for (int i = 0; i < 80; i++) {
 			if (newStudent->firstName[i] != '\0' && !firstEnd) {
 				hashIndex += newStudent->firstName[i];
@@ -231,9 +251,11 @@ void randomStudents(Student** & hashTable, int* & size) {
 			else lastEnd = true;
 		}
 		hashIndex %= *size;
+		cout << "The student " << newStudent->firstName << " " << newStudent->lastName << " was successfully added." << endl;
 		if (hashTable[hashIndex] == NULL) {
 			hashTable[hashIndex] = newStudent;
 		}
+		//Resize the table if needed
 		else {
 			Student* current = hashTable[hashIndex];
 			int counts = 2;
@@ -244,7 +266,6 @@ void randomStudents(Student** & hashTable, int* & size) {
 			current->next = newStudent;
 			if (counts > 3) reHash(hashTable, size);
 		}
-		cout << "The student " << newStudent->firstName << " " << newStudent->lastName << " was successfully added." << endl;
 		firstNames.clear();
 		firstNames.seekg(0, ios::beg);
 		lastNames.clear();
@@ -252,6 +273,7 @@ void randomStudents(Student** & hashTable, int* & size) {
 	}
 }
 
+//Resize the table by calling the hash function on all objects in the hash table (but using double the original size!)
 void reHash(Student** & hashTable, int* & size) {
 	Student** newHash = new Student*[*size * 2];
 	for (int i = 0; i < *size * 2; i++) {
@@ -294,5 +316,18 @@ void reHash(Student** & hashTable, int* & size) {
 	}
 	hashTable = newHash;
 	size = new int(*size * 2);
+	for (int i = 0; i < *size; i++) {
+		Student* temp = hashTable[i];
+		int counter = 0;
+		while (temp != NULL) {
+			temp = temp->next;
+			counter++;
+		}
+		//Resize again if needed.
+		if (counter > 3) {
+			reHash(hashTable, size);
+			break;
+		}
+	}
 
 }
