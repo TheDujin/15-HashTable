@@ -187,6 +187,7 @@ void deleteStudent(Student** hashTable, int* size) {
 			else previous->next = current->next;
 			cout << "Student successfully deleted." << endl;
 			current = NULL;
+			return;
 		}
 		else {
 			previous = current;
@@ -231,8 +232,8 @@ void randomStudents(Student** & hashTable, int* & size) {
 		strcpy(newStudent->firstName, newfirstName);
 		strcpy(newStudent->lastName, newlastName);
 		for (int j = 0; j < 80; j++) {
-			if (newStudent->firstName[j] == '\r' || newStudent->lastName[j] == '\n') newStudent->firstName[j] = '\0';
-			if (newStudent->firstName[j] == '\r' || newStudent->lastName[j] == '\n') newStudent->lastName[j] = '\0';
+			if (newStudent->firstName[j] == '\r' || newStudent->firstName[j] == '\n') newStudent->firstName[j] = '\0';
+			if (newStudent->lastName[j] == '\r' || newStudent->lastName[j] == '\n') newStudent->lastName[j] = '\0';
 		}
 		newStudent->gpa = gpa;
 		newStudent->id = id;
